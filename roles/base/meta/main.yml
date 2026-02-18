@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Vps-Dev
+  role_name: base
+  description: Paquets de base et timezone pour VPS Fedora (ansible-vps)
+  license: MIT
+  min_ansible_version: "2.14"
+
+dependencies: []

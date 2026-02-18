@@ -1,0 +1,15 @@
+---
+- name: Valider la configuration security
+  ansible.builtin.assert:
+    that:
+      - security_selinux_state in ['enforcing', 'permissive', 'disabled']
+      - security_selinux_policy in ['targeted', 'minimum', 'mls']
+      - security_sysctl_parameters is defined
+      - security_sysctl_parameters | length > 0
+    fail_msg: "Configuration security invalide. Vérifiez defaults/main.yml"
+
+- name: Inclure la configuration SELinux
+  ansible.builtin.import_tasks: selinux.yml
+
+- name: Inclure la configuration sysctl
+  ansible.builtin.import_tasks: sysctl.yml

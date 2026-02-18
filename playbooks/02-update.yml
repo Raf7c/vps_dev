@@ -1,0 +1,16 @@
+---
+- name: Mise à jour complète du VPS
+  hosts: vps
+  become: true
+  become_user: root
+  become_method: ansible.builtin.su
+
+  tasks:
+    - name: Rafraîchir le cache DNF
+      ansible.builtin.dnf:
+        update_cache: true
+
+    - name: Mettre à jour tous les paquets  # noqa: package-latest
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest

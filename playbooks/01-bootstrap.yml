@@ -1,0 +1,81 @@
+---
+# Bootstrap (première fois) : make bootstrap avec ansible_user=fedora
+- name: Ansible-vps – Bootstrap utilisateur
+  hosts: vps
+  become: true
+
+  pre_tasks:
+    - name: Valider les variables requises
+      ansible.builtin.assert:
+        that:
+          - main_user is defined
+          - main_user | length > 0
+          - ssh_pub_key_path is defined
+          - ssh_pub_key_path | length > 0
+          - root_password_hashed is defined
+          - root_password_hashed | length > 0
+        fail_msg: |
+          Variables requises manquantes (vault) :
+          - main_user, ssh_pub_key_path, root_password_hashed
+        success_msg: "Toutes les variables requises sont définies"
+
+    - name: Vérifier que la clé SSH publique existe
+      ansible.builtin.assert:
+        that:
+          - lookup('file', ssh_pub_key_path) is defined
+        fail_msg: "Le fichier de clé SSH publique n'existe pas : {{ ssh_pub_key_path }}"
+        success_msg: "Fichier de clé SSH publique trouvé"
+
+  tasks:
+    - name: Lire la clé SSH publique
+      ansible.builtin.set_fact:
+        ssh_pub_key: "{{ lookup('file', ssh_pub_key_path) }}"
+
+    - name: Créer l'utilisateur principal (sans sudo)
+      ansible.builtin.user:
+        name: "{{ main_user }}"
+        shell: /usr/bin/bash
+        create_home: true
+        groups: wheel
+        password: "{{ main_user_password_hashed | default(omit) }}"
+        update_password: always
+      no_log: true
+
+    - name: Poser la clé SSH pour l'utilisateur principal
+      ansible.posix.authorized_key:
+        user: "{{ main_user }}"
+        key: "{{ ssh_pub_key }}"
+
+    - name: Supprimer le fichier sudoers de main_user (pas de sudo)
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/{{ main_user }}"
+        state: absent
+
+    - name: Définir le mot de passe root
+      ansible.builtin.user:
+        name: root
+        password: "{{ root_password_hashed }}"
+        update_password: always
+      no_log: true
+
+    - name: S'assurer que ~/.ssh a les bonnes permissions (main_user)
+      ansible.builtin.file:
+        path: "/home/{{ main_user }}/.ssh"
+        state: directory
+        owner: "{{ main_user }}"
+        group: "{{ main_user }}"
+        mode: "0700"
+
+    - name: S'assurer que authorized_keys a les bonnes permissions
+      ansible.builtin.file:
+        path: "/home/{{ main_user }}/.ssh/authorized_keys"
+        state: file
+        owner: "{{ main_user }}"
+        group: "{{ main_user }}"
+        mode: "0600"
+
+    - name: Désactiver le compte bootstrap (shell nologin)
+      ansible.builtin.user:
+        name: "{{ bootstrap_user }}"
+        shell: /sbin/nologin
+      when: bootstrap_user is defined and bootstrap_user | length > 0

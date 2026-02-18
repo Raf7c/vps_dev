@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Vps-Dev
+  role_name: ssh
+  description: Durcissement SSH (sshd_config.d, port, AllowUsers, crypto)
+  license: MIT
+  min_ansible_version: "2.14"
+
+dependencies: []

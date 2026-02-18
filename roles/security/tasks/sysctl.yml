@@ -1,0 +1,22 @@
+---
+- name: Appliquer les paramètres sysctl
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: false
+  loop: "{{ security_sysctl_parameters }}"
+  ignore_errors: true
+  register: security_sysctl_result
+  failed_when: false
+  changed_when: not (security_sysctl_result.failed | default(false))
+  notify: Reload sysctl
+
+- name: Afficher les paramètres sysctl ignorés
+  ansible.builtin.debug:
+    msg: "Paramètre sysctl ignoré (n'existe pas) : {{ item.item.key }}"
+  loop: "{{ security_sysctl_result.results | default([]) }}"
+  when: item.failed | default(false)
+  loop_control:
+    label: "{{ item.item.key }}"

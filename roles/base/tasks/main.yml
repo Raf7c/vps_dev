@@ -1,0 +1,25 @@
+---
+- name: Valider la configuration base
+  ansible.builtin.assert:
+    that:
+      - base_system_packages is defined
+      - base_cli_tools is defined
+      - base_dev_c_packages is defined
+      - base_dev_python_packages is defined
+      - base_dev_other_packages is defined
+      - base_editors is defined
+      - base_vcs_packages is defined
+      - base_timezone is defined
+    fail_msg: "Configuration base invalide. Vérifiez defaults/main.yml"
+
+- name: Installer les paquets de base (dernières versions)  # noqa: package-latest
+  ansible.builtin.dnf:
+    name: >-
+      {{ base_system_packages + base_cli_tools + base_dev_c_packages
+         + base_dev_python_packages + base_dev_other_packages
+         + base_editors + base_vcs_packages }}
+    state: latest
+
+- name: Définir le fuseau horaire
+  community.general.timezone:
+    name: "{{ base_timezone }}"

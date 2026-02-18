@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Vps-Dev
+  role_name: fail2ban
+  description: Fail2ban (jail sshd + recidive, intégration firewalld)
+  license: MIT
+  min_ansible_version: "2.14"
+
+dependencies: []

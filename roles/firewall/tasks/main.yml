@@ -1,0 +1,52 @@
+---
+- name: Installer firewalld
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+
+- name: Démarrer et activer firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Ouvrir le port SSH (dynamique)
+  ansible.posix.firewalld:
+    port: "{{ ssh_port }}/tcp"
+    zone: "{{ firewall_default_zone }}"
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Autoriser les services (sauf ssh si port personnalisé)
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    zone: "{{ firewall_default_zone }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ firewall_allowed_services }}"
+  when: item != 'ssh' or ssh_port == 22
+
+- name: Définir la zone par défaut
+  ansible.posix.firewalld:
+    zone: "{{ firewall_default_zone }}"
+    permanent: true
+    state: enabled
+
+- name: Définir la cible par défaut (DROP)
+  ansible.posix.firewalld:
+    zone: "{{ firewall_default_zone }}"
+    target: "{{ firewall_default_target }}"
+    state: enabled
+    permanent: true
+  notify: Reload firewalld
+
+- name: Désactiver les services inutiles
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    zone: "{{ firewall_default_zone }}"
+    permanent: true
+    state: disabled
+    immediate: true
+  loop: "{{ firewall_blocked_services }}"

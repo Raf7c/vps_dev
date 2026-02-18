@@ -1,0 +1,37 @@
+---
+- name: Installer fail2ban
+  ansible.builtin.dnf:
+    name: fail2ban
+    state: present
+
+- name: Configurer jail.local
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [DEFAULT]
+      backend = {{ fail2ban_backend }}
+      banaction = {{ fail2ban_banaction }}
+      bantime = {{ fail2ban_bantime }}
+      findtime = {{ fail2ban_findtime }}
+      maxretry = {{ fail2ban_maxretry }}
+
+      [sshd]
+      enabled = true
+      port = {{ ssh_port }}
+      filter = sshd
+
+      [recidive]
+      enabled = {{ fail2ban_recidive_enabled | lower }}
+      bantime = {{ fail2ban_recidive_bantime }}
+      findtime = {{ fail2ban_recidive_findtime }}
+      maxretry = {{ fail2ban_recidive_maxretry }}
+  notify: Restart fail2ban
+
+- name: Démarrer et activer fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started

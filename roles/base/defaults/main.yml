@@ -1,0 +1,47 @@
+---
+# Paquets système essentiels
+base_system_packages:
+  - curl
+  - wget
+  - man-pages
+
+# Outils CLI modernes
+base_cli_tools:
+  - zsh
+  - htop
+  - tmux
+  - ripgrep
+  - bat
+  - bind-utils
+
+# Développement C/C++
+base_dev_c_packages:
+  - make
+  - gcc
+  - gcc-c++
+  - gdb
+  - cmake
+  - valgrind
+
+# Développement Python
+base_dev_python_packages:
+  - python3-pip
+  - python3-devel
+  - python3-virtualenv
+  - python3-setuptools
+
+# Développement autres langages
+base_dev_other_packages:
+  - python3
+  - go
+  - nodejs
+
+# Éditeurs
+base_editors:
+  - neovim
+
+# Outils de versioning
+base_vcs_packages:
+  - git
+
+base_timezone: Europe/Paris

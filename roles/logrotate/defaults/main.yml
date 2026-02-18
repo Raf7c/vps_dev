@@ -1,0 +1,12 @@
+---
+# Paramètres globaux (/etc/logrotate.conf)
+logrotate_frequency: weekly
+logrotate_rotate: 4
+logrotate_compress: true
+logrotate_dateext: true
+logrotate_create: true
+
+# Fail2ban (/etc/logrotate.d/fail2ban)
+logrotate_fail2ban_path: /var/log/fail2ban.log
+logrotate_fail2ban_frequency: weekly
+logrotate_fail2ban_rotate: 8

@@ -1,0 +1,54 @@
+---
+- name: Valider la configuration logrotate
+  ansible.builtin.assert:
+    that:
+      - logrotate_frequency in ['daily', 'weekly', 'monthly']
+      - logrotate_rotate | int > 0
+      - logrotate_fail2ban_rotate | int > 0
+    fail_msg: "Configuration logrotate invalide. Vérifiez defaults/main.yml"
+
+- name: Installer logrotate
+  ansible.builtin.dnf:
+    name: logrotate
+    state: present
+
+- name: Configurer /etc/logrotate.conf
+  ansible.builtin.copy:
+    dest: /etc/logrotate.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      {{ logrotate_frequency }}
+      rotate {{ logrotate_rotate }}
+      {% if logrotate_create %}create{% endif %}
+
+      {% if logrotate_compress %}compress{% endif %}
+      {% if logrotate_dateext %}dateext{% endif %}
+
+      include /etc/logrotate.d
+
+- name: Configurer logrotate pour fail2ban
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/fail2ban
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      {{ logrotate_fail2ban_path }} {
+          {{ logrotate_fail2ban_frequency }}
+          rotate {{ logrotate_fail2ban_rotate }}
+          compress
+          delaycompress
+          missingok
+          notifempty
+          postrotate
+              fail2ban-client flushlogs 1>/dev/null || true
+          endscript
+      }
+
+- name: Activer et démarrer le timer logrotate
+  ansible.builtin.systemd:
+    name: logrotate.timer
+    enabled: true
+    state: started

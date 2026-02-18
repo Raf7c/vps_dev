@@ -1,0 +1,113 @@
+---
+- name: Valider les variables SSH
+  ansible.builtin.assert:
+    that:
+      - ssh_port | int >= 1 and ssh_port | int <= 65535
+      - main_user is defined and main_user | length > 0
+      - ssh_ciphers is defined and ssh_ciphers | length > 0
+      - ssh_macs is defined and ssh_macs | length > 0
+      - ssh_kex_algorithms is defined and ssh_kex_algorithms | length > 0
+      - ssh_max_auth_tries | int >= 1 and ssh_max_auth_tries | int <= 6
+      - ssh_max_sessions | int >= 1 and ssh_max_sessions | int <= 20
+      - ssh_client_alive_interval | int >= 60 and ssh_client_alive_interval | int <= 3600
+      - ssh_login_grace_time | int >= 10 and ssh_login_grace_time | int <= 120
+    fail_msg: "Configuration SSH invalide. Vérifiez les variables dans defaults/main.yml"
+
+- name: S'assurer que sshd_config.d existe
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Sauvegarder sshd_config actuel
+  ansible.builtin.copy:
+    src: /etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config.backup
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  register: ssh_sshd_backup_result
+  failed_when: false
+
+- name: AllowUsers
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-allow-users.conf
+    content: |
+      AllowUsers {{ main_user }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate sshd config
+    - Restart sshd
+
+- name: Port SSH
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/30-port.conf
+    content: |
+      Port {{ ssh_port }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate sshd config
+    - Restart sshd
+
+- name: Options de durcissement SSH
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/40-hardening.conf
+    content: |
+      PermitRootLogin {{ ssh_permit_root_login }}
+      PasswordAuthentication {{ ssh_password_authentication }}
+      ChallengeResponseAuthentication no
+      UsePAM yes
+      X11Forwarding {{ ssh_x11_forwarding }}
+      AuthenticationMethods publickey
+      Protocol 2
+      LogLevel VERBOSE
+      StrictModes yes
+      IgnoreRhosts yes
+      HostbasedAuthentication no
+      PermitEmptyPasswords no
+      MaxAuthTries {{ ssh_max_auth_tries }}
+      MaxStartups {{ ssh_max_startups }}
+      MaxSessions {{ ssh_max_sessions }}
+      ClientAliveInterval {{ ssh_client_alive_interval }}
+      ClientAliveCountMax {{ ssh_client_alive_count_max }}
+      AllowTcpForwarding {{ ssh_allow_tcp_forwarding }}
+      AllowAgentForwarding {{ ssh_allow_agent_forwarding }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate sshd config
+    - Restart sshd
+
+- name: Rate limiting SSH
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/50-rate-limit.conf
+    content: |
+      LoginGraceTime {{ ssh_login_grace_time }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate sshd config
+    - Restart sshd
+
+- name: Algorithmes SSH (Ciphers, MACs, KexAlgorithms)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/60-crypto-algorithms.conf
+    content: |
+      Ciphers {{ ssh_ciphers | join(',') }}
+      MACs {{ ssh_macs | join(',') }}
+      KexAlgorithms {{ ssh_kex_algorithms | join(',') }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate sshd config
+    - Restart sshd

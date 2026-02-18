@@ -1,0 +1,5 @@
+---
+- name: Configurer SELinux
+  ansible.posix.selinux:
+    policy: "{{ security_selinux_policy }}"
+    state: "{{ security_selinux_state }}"

@@ -1,0 +1,8 @@
+---
+firewall_default_zone: public
+firewall_default_target: DROP
+firewall_allowed_services:
+  - ssh
+firewall_blocked_services:
+  - mdns
+  - dhcpv6-client

@@ -1,0 +1,14 @@
+---
+- name: Ansible-vps – Configuration complète
+  hosts: vps
+  become: true
+  become_user: root
+  become_method: ansible.builtin.su
+
+  roles:
+    - ssh
+    - base
+    - security
+    - firewall
+    - fail2ban
+    - logrotate

@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Vps-Dev
+  role_name: logrotate
+  description: Rotation et rétention des logs (fail2ban, global)
+  license: MIT
+  min_ansible_version: "2.14"
+
+dependencies: []
