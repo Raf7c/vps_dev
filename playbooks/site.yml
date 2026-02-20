@@ -12,3 +12,5 @@
     - firewall
     - fail2ban
     - logrotate
+    - auditd
+    - docker

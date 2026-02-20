@@ -1,0 +1,29 @@
+---
+docker_users:
+  - "{{ main_user }}"
+
+# Configuration du daemon Docker
+docker_daemon_log_driver: "json-file"
+docker_daemon_log_max_size: "10m"
+docker_daemon_log_max_file: "3"
+docker_daemon_storage_driver: "overlay2"
+
+# Sécurité daemon
+docker_daemon_live_restore: true        # containers survivent au restart du daemon
+docker_daemon_userland_proxy: false     # désactiver le proxy userland (perf + sécu)
+docker_daemon_no_new_privileges: true   # empêcher l'escalade de privilèges dans les containers
+
+# SELinux
+docker_selinux_boolean: container_manage_cgroup
+
+# Repo Docker officiel (Fedora)
+docker_repo_url: "https://download.docker.com/linux/fedora/docker-ce.repo"
+docker_repo_dest: "/etc/yum.repos.d/docker-ce.repo"
+
+# Paquets Docker à installer
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin

@@ -1,0 +1,43 @@
+---
+- name: Installer auditd
+  ansible.builtin.dnf:
+    name: audit
+    state: present
+
+- name: Configurer auditd.conf
+  ansible.builtin.lineinfile:
+    path: /etc/audit/auditd.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^max_log_file\s*=', line: "max_log_file = {{ auditd_max_log_file }}" }
+    - { regexp: '^num_logs\s*=', line: "num_logs = {{ auditd_num_logs }}" }
+    - { regexp: '^max_log_file_action\s*=', line: "max_log_file_action = {{ auditd_max_log_file_action }}" }
+    - { regexp: '^space_left_action\s*=', line: "space_left_action = {{ auditd_space_left_action }}" }
+    - { regexp: '^admin_space_left_action\s*=', line: "admin_space_left_action = {{ auditd_admin_space_left_action }}" }
+  notify: Restart auditd
+
+- name: Déployer les règles d'audit (identité, SSH, auth)
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/99-hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      # Identité et comptes
+      -w /etc/passwd -p wa -k identity
+      -w /etc/shadow -p wa -k identity
+      -w /etc/sudoers -p wa -k sudoers
+      # Configuration SSH
+      -w /etc/ssh/sshd_config -p wa -k sshd_config
+      -w /etc/ssh/sshd_config.d -p wa -k sshd_config
+      # Authentification
+      -w /var/log/auth.log -p wa -k auth
+      -w /var/log/secure -p wa -k auth
+  notify: Reload auditd rules
+
+- name: Démarrer et activer auditd
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started

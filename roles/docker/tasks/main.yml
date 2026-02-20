@@ -1,0 +1,84 @@
+---
+- name: Valider la configuration docker
+  ansible.builtin.assert:
+    that:
+      - docker_users is defined and docker_users | length > 0
+      - docker_daemon_log_max_size is defined
+      - docker_daemon_log_max_file is defined
+      - docker_packages is defined and docker_packages | length > 0
+    fail_msg: "Configuration docker invalide. Vérifiez defaults/main.yml"
+
+- name: Ajouter le repo Docker officiel
+  ansible.builtin.get_url:
+    url: "{{ docker_repo_url }}"
+    dest: "{{ docker_repo_dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Installer Docker
+  ansible.builtin.dnf:
+    name: "{{ docker_packages }}"
+    state: present
+
+- name: Créer le répertoire de configuration Docker
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configurer le daemon Docker
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      {
+        "log-driver": "{{ docker_daemon_log_driver }}",
+        "log-opts": {
+          "max-size": "{{ docker_daemon_log_max_size }}",
+          "max-file": "{{ docker_daemon_log_max_file }}"
+        },
+        "storage-driver": "{{ docker_daemon_storage_driver }}",
+        "live-restore": {{ docker_daemon_live_restore | lower }},
+        "userland-proxy": {{ docker_daemon_userland_proxy | lower }},
+        "no-new-privileges": {{ docker_daemon_no_new_privileges | lower }}
+      }
+  notify: Restart docker
+
+- name: Configurer SELinux pour Docker (container_manage_cgroup)
+  ansible.posix.seboolean:
+    name: "{{ docker_selinux_boolean }}"
+    state: true
+    persistent: true
+
+- name: Ajouter les utilisateurs au groupe docker
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+
+- name: Démarrer et activer Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Démarrer et activer containerd
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: started
+
+- name: Ouvrir le masquerading firewall pour Docker
+  ansible.posix.firewalld:
+    masquerade: true
+    zone: public
+    permanent: true
+    state: enabled
+    immediate: true
+  notify: Reload firewalld

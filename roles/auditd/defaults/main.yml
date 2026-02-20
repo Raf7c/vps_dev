@@ -1,0 +1,6 @@
+---
+auditd_max_log_file: 50        # Mo par fichier de log
+auditd_num_logs: 5             # nombre de fichiers conservés
+auditd_max_log_file_action: rotate
+auditd_space_left_action: syslog
+auditd_admin_space_left_action: halt

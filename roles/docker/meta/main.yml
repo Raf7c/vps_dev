@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  description: "Installation et configuration sécurisée de Docker CE sur Fedora"
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Fedora
+      versions:
+        - all
+
+dependencies:
+  - role: firewall
+  - role: security
