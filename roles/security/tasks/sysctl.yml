@@ -10,7 +10,7 @@
   ignore_errors: true
   register: security_sysctl_result
   failed_when: false
-  changed_when: not (security_sysctl_result.failed | default(false))
+  changed_when: security_sysctl_result.changed | default(false)
   notify: Reload sysctl
 
 - name: Afficher les paramètres sysctl ignorés

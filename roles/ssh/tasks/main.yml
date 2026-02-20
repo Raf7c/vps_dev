@@ -62,11 +62,10 @@
     content: |
       PermitRootLogin {{ ssh_permit_root_login }}
       PasswordAuthentication {{ ssh_password_authentication }}
-      ChallengeResponseAuthentication no
+      KbdInteractiveAuthentication no
       UsePAM yes
       X11Forwarding {{ ssh_x11_forwarding }}
       AuthenticationMethods publickey
-      Protocol 2
       LogLevel VERBOSE
       StrictModes yes
       IgnoreRhosts yes
